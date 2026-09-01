@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chrome Translator — Chat Test</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 40px 20px;
+      font-family: Arial, sans-serif;
+      background: #f4f5f7;
+      color: #222;
+    }
+
+    .chat {
+      width: 100%;
+      max-width: 700px;
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .08);
+    }
+
+    .chat-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid #eee;
+      font-weight: 700;
+    }
+
+    .messages {
+      min-height: 420px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .message {
+      max-width: 80%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+
+    .message:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, .08);
+    }
+
+    .message.received {
+      align-self: flex-start;
+      background: #eef1f5;
+    }
+
+    .message.sent {
+      align-self: flex-end;
+      background: #dbeafe;
+    }
+
+    .message-author {
+      margin-bottom: 5px;
+      font-size: 12px;
+      font-weight: 700;
+      opacity: .65;
+    }
+
+    .message-text {
+      line-height: 1.45;
+    }
+
+    .translation {
+      margin-top: 9px;
+      padding-top: 9px;
+      border-top: 1px solid rgba(0, 0, 0, .1);
+      color: #555;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .composer {
+      position: relative;
+      padding: 16px;
+      border-top: 1px solid #eee;
+    }
+
+    .composer textarea {
+      width: 100%;
+      min-height: 100px;
+      resize: vertical;
+      padding: 14px 48px 14px 14px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font: inherit;
+      outline: none;
+    }
+
+    .composer textarea:focus {
+      border-color: #888;
+    }
+
+    .send {
+      margin-top: 10px;
+      width: 100%;
+      padding: 11px 15px;
+      border: 0;
+      border-radius: 9px;
+      background: #222;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .send:hover {
+      opacity: .9;
+    }
+
+    .test-controls {
+      width: 100%;
+      max-width: 700px;
+      margin: 20px auto 0;
+    }
+
+    .test-controls button {
+      padding: 10px 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="chat">
+
+    <div class="chat-header">
+      Chrome Translator — Chat Test
+    </div>
+
+    <div class="messages" id="messages">
+
+      <div
+        class="message received"
+        data-message="true"
+        
+      >
+        <div class="message-author">John</div>
+        <div class="message-text">
+          Hello, how are you?
+        </div>
+      </div>
+
+      <div
+        class="message received"
+        data-message="true"
+        
+      >
+        <div class="message-author">Maria</div>
+        <div class="message-text">
+          Você está trabalhando hoje?
+        </div>
+      </div>
+
+      <div
+        class="message sent"
+        data-message="true"
+        
+      >
+        <div class="message-author">Tú</div>
+        <div class="message-text">
+          Sí, estoy trabajando.
+        </div>
+      </div>
+
+    </div>
+
+    <div class="composer">
+
+      <textarea
+        id="chat-input"
+        placeholder="Escribe tu mensaje..."
+      ></textarea>
+
+      <button class="send" id="send">
+        Enviar
+      </button>
+
+    </div>
+
+  </div>
+
+  <div class="test-controls">
+    <button id="add-message">
+      Agregar mensaje recibido
+    </button>
+  </div>
+
+  <script>
+    const messages = document.getElementById('messages')
+    const addMessageButton = document.getElementById('add-message')
+
+    addMessageButton.addEventListener('click', () => {
+      const message = document.createElement('div')
+
+      message.className = 'message received'
+      message.dataset.message = 'true'
+      message.dataset.language = 'en'
+
+      message.innerHTML = `
+        <div class="message-author">Sarah</div>
+        <div class="message-text">
+          Nice to meet you!
+        </div>
+      `
+
+      messages.appendChild(message)
+    })
+  </script>
+
+</body>
+</html>
