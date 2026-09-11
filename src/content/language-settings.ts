@@ -1,37 +1,42 @@
-export type LanguagePair = {
-  source: string
-  target: string
+export type TranslationSettings = {
+  incomingTarget: string
+  outgoingTarget: string
+  writingLanguage: string
 }
 
-const LANGUAGE_PAIR_KEY = 'translationLanguagePair'
+const TRANSLATION_SETTINGS_KEY = 'translationSettings'
 
-const DEFAULT_LANGUAGE_PAIR: LanguagePair = {
-  source: 'es',
-  target: 'en',
+const DEFAULT_SETTINGS: TranslationSettings = {
+  incomingTarget: 'en',
+  outgoingTarget: 'es',
+  writingLanguage: 'en',
 }
 
-export async function getLanguagePair(): Promise<LanguagePair> {
+export async function getTranslationConfig(): Promise<TranslationSettings> {
   const result =
     await chrome.storage.local.get(
-      LANGUAGE_PAIR_KEY,
+      TRANSLATION_SETTINGS_KEY,
     )
 
   const raw =
-    result[LANGUAGE_PAIR_KEY]
+    result[TRANSLATION_SETTINGS_KEY]
 
   if (
     typeof raw === 'object' &&
     raw !== null &&
-    'source' in raw &&
-    'target' in raw &&
-    typeof raw.source === 'string' &&
-    typeof raw.target === 'string'
+    'incomingTarget' in raw &&
+    'outgoingTarget' in raw &&
+    'writingLanguage' in raw &&
+    typeof raw.incomingTarget === 'string' &&
+    typeof raw.outgoingTarget === 'string' &&
+    typeof raw.writingLanguage === 'string'
   ) {
     return {
-      source: raw.source,
-      target: raw.target,
+      incomingTarget: raw.incomingTarget,
+      outgoingTarget: raw.outgoingTarget,
+      writingLanguage: raw.writingLanguage,
     }
   }
 
-  return DEFAULT_LANGUAGE_PAIR
+  return DEFAULT_SETTINGS
 }

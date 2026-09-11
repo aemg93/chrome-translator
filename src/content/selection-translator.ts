@@ -2,17 +2,13 @@ import {
   ChromeBuiltInTranslationProvider,
 } from '../services/translation/ChromeBuiltInTranslationProvider'
 
-import {
-  getLanguagePair,
-} from './language-settings'
-
 import type { SelectionSnapshot } from './selection-types'
 import { captureSelection, getSelectionSignature } from './selection-capture'
 import { replaceInputSelection } from './input-replacement'
 import { replaceContentEditableSelection } from './contenteditable-replacement'
-import { getTranslationDirection } from './translation-direction'
 import { removeTranslation, showTranslation } from './translation-popup'
 import { installHistoryHooks } from './navigation-hooks'
+import { getTranslationConfig } from './language-settings'
 
 let debounceTimer: number | null = null
 let requestId = 0
@@ -35,62 +31,94 @@ function clearSelectionState(): void {
   }
 }
 
+async function getConfig(): Promise<{ enabled: boolean; writingLanguage: string; incomingTarget: string; outgoingTarget: string }> {
+  const config = await getTranslationConfig()
+  const enabledRaw = await chrome.storage.local.get('extensionEnabled')
+  const enabled = typeof enabledRaw.extensionEnabled === 'boolean' ? enabledRaw.extensionEnabled : true
+  return { enabled, ...config }
+}
+
 async function translateSnapshot(selection: SelectionSnapshot): Promise<void> {
   const currentRequest = ++requestId
 
-  const pair = await getLanguagePair()
-
+  const config = await getConfig()
+  if (!config.enabled) {
+    // extension is disabled
+    return
+  }
   if (currentRequest !== requestId) {
     return
   }
 
-  const detectionText = selection.text.slice(0, LANGUAGE_DETECTION_SAMPLE_SIZE)
-
-  const detected = await provider.detect(detectionText)
-
-  if (currentRequest !== requestId) {
+  // If the selection is empty, nothing to do
+  if (!selection.text || !selection.text.trim()) {
     return
   }
 
-  const direction = getTranslationDirection(
-    detected.language,
-    pair.source,
-    pair.target,
-  )
+  let sourceLang: string
+  let targetLang: string
+  let detectedLanguage: string | undefined
+  let detectedConfidence: number | undefined
 
-  if (!direction) {
+  if (selection.editable) {
+    // For user‑typed text, trust the configured writing language
+    sourceLang = config.writingLanguage
+    targetLang = config.outgoingTarget
+    // Log the attempt (editable)
     console.log(
-      '[Chrome Translator] Idioma no pertenece al par configurado; selección ignorada:',
+      '[Chrome Translator] Traducción (editable):',
       {
-        detected: detected.language,
-        source: pair.source,
-        target: pair.target,
+        text: selection.text,
+        source: sourceLang,
+        target: targetLang,
+        editable: true,
+        requestId: currentRequest,
       },
     )
-
-    return
+    // If source and target are the same, no translation needed
+    if (sourceLang === targetLang) {
+      return
+    }
+  } else {
+    // For page/received text, detect language
+    const detectionText = selection.text.slice(0, LANGUAGE_DETECTION_SAMPLE_SIZE)
+    try {
+      const detected = await provider.detect(detectionText)
+      detectedLanguage = detected.language
+      detectedConfidence = detected.confidence
+    } catch (e) {
+      // If detection fails (should not happen for non‑empty text), fallback
+      detectedLanguage = ''
+      detectedConfidence = 0
+    }
+    sourceLang = detectedLanguage ?? ''
+    targetLang = config.incomingTarget
+    // If detected language equals target, skip unnecessary translation
+    if (sourceLang === targetLang) {
+      console.log(
+        '[Chrome Translator] Idioma ya es el destino; selección ignorada:',
+        { detected: sourceLang, target: targetLang },
+      )
+      return
+    }
+    console.log(
+      '[Chrome Translator] Traducción:',
+      {
+        text: selection.text,
+        detected: sourceLang,
+        source: sourceLang,
+        target: targetLang,
+        editable: false,
+        requestId: currentRequest,
+      },
+    )
   }
 
-  console.log(
-    '[Chrome Translator] Traducción:',
-    {
-      text: selection.text,
-      detected: detected.language,
-      source: direction.source,
-      target: direction.target,
-      editable: selection.editable,
-      requestId: currentRequest,
-    },
-  )
-
-  if (direction.source === direction.target) {
-    return
-  }
-
+  // Perform translation
   const translated = await provider.translate(
     selection.text,
-    direction.source,
-    direction.target,
+    sourceLang,
+    targetLang,
   )
 
   if (currentRequest !== requestId) {
@@ -100,7 +128,6 @@ async function translateSnapshot(selection: SelectionSnapshot): Promise<void> {
 
   if (selection.editable) {
     let replaced = false
-
     if (
       selection.element instanceof HTMLInputElement ||
       selection.element instanceof HTMLTextAreaElement
@@ -125,10 +152,10 @@ async function translateSnapshot(selection: SelectionSnapshot): Promise<void> {
       selection.range,
       translated,
       {
-        language: direction.source,
-        confidence: detected.confidence,
+        language: detectedLanguage ?? sourceLang,
+        confidence: detectedConfidence ?? 0,
       },
-      direction.target,
+      targetLang,
     )
   }
 }
@@ -174,11 +201,9 @@ function scheduleSelectionProcessing(): void {
 
 function handleSelectionChange(): void {
   const selection = captureSelection()
-
   if (!selection) {
     return
   }
-
   currentSelection = selection
   scheduleSelectionProcessing()
 }
