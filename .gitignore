@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local backups and generated archives
+*.bak
+*.bak2
+*.backup
+chrome-translator.zip
