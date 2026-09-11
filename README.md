@@ -6,6 +6,12 @@
 ![GitHub pull requests](https://img.shields.io/github/issues-pr/aemg93/chrome-translator)
 ![GitHub License](https://img.shields.io/github/license/aemg93/chrome-translator)
 
+## 📥 Download
+
+[![Download Chrome Translator](https://img.shields.io/badge/⬇️%20Download-Chrome%20Translator-success?style=for-the-badge&logo=googlechrome&logoColor=white)](https://github.com/aemg93/chrome-translator/releases/latest/download/chrome-translator.zip)
+
+Download the latest ready-to-install version of Chrome Translator.
+
 A powerful Chrome extension for intelligent bidirectional translation. Translate your text to a target language and automatically translate foreign page text to your native language.
 
 ## ✨ Features
